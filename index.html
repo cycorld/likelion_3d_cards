@@ -1,0 +1,230 @@
+<!-- Edited: https://plus.google.com/113862800338869870683/posts/QcFk5HrWran -->
+<!DOCTYPE html>
+<html
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,minimum-scale=1.0,maximum-scale=1.0">
+    <title>멋쟁이 사자처럼</title>
+    <style type="text/css">
+        html, body { height: 100%; }
+        body { background: #000 url('mosaic.png') repeat; margin: 0; font-family: NanumGothic, sans-serif; overflow: hidden; }
+        .card { width: 240px; height: 280px; box-shadow: 0 0 20px rgba(0,255,255,0.5); border: 1px solid rgba(127,255,255,0.25); cursor: default; background-color: rgba(0,127,127,0.3); }
+        .card:hover { box-shadow: 0 0 20px rgba(0,255,255,0.75); border: 1px solid rgba(127,255,255,0.75); }
+        .card .number { position: absolute; top: 20px; right: 20px; font-size: 20px; color: rgba(127,255,255,0.75); }
+        .card .sprite { position: absolute; top: 40px; width: 100%; text-align: center; }
+        .card .sprite img { width: 180px; height: 180px; opacity: 0.7; filter: alpha(opacity=70); }
+        .card .name { position: absolute; top: 225px; width: 100%; font-size: 18px; text-align: center; color: rgba(127,255,255,0.75); } 
+        #menu { position: absolute; bottom: 20px; width: 100%; text-align: center; }
+        button { color: rgba(127,255,255,0.75); background: transparent; outline: 1px solid rgba(127,255,255,0.75); border: 0; padding: 5px 10px; cursor: pointer; }
+        button:hover { background-color: rgba(0,255,255,0.5); }
+        button:active { color: #000; background-color: rgba(0,255,255,0.75); }
+    </style>
+    <script type="text/javascript" src="three.min.js"></script>
+    <script type="text/javascript" src="tween.min.js"></script>
+    <script type="text/javascript" src="trackball.controls.js"></script>
+    <script type="text/javascript" src="css3d.renderer.js"></script>
+    <script type="text/javascript" src="buzz.js"></script>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="menu">
+        <button id="table">평면</button>
+        <button id="sphere">구</button>
+        <button id="helix">나선</button>
+        <button id="grid">그리드</button>
+	<button>드래그 : 회전 / 휠스크롤 : 확대 및 축소</button>
+    </div>
+    <div id="timer"></div>
+    <script type="text/javascript">
+      var mySound = new buzz.sound( "This_is_the_moment", {
+          formats: [ "mp3" ]
+      });
+
+      mySound.play()
+          .fadeIn()
+          .loop()
+          .bind( "timeupdate", function() {
+             var timer = buzz.toTimer( this.getTime() );
+             document.getElementById( "timer" ).innerHTML = timer;
+          });
+
+
+        var likelion = [
+
+            ['duhee','이두희'],
+            ['yongchol','최용철'],
+            ['haeun','유하은'],
+            ['bogum','최보금'],
+            ['js','하재승'],
+            ['jeguus','조승현'],
+            ['00','오주현'],
+            ['01','권보경'],
+            ['02','권성연'],
+            ['03','김건'],
+            ['04','김길호'],
+            ['05','김다민'],
+            ['06','김도진'],
+            ['07','김상화'],
+            ['08','이홍석'],
+            ['09','김성수'],
+            ['10','김예흰'],
+            ['11','박수상'],
+            ['12','박연주'],
+            ['13','배인호'],
+            ['14','변지훈'],
+            ['15','신범준'],
+            ['16','양영석'],
+            ['17','오천석'],
+            ['18','이주민'],
+            ['19','전민영'],
+            ['20','정호석'],
+            ['21','조건형'],
+            ['22','지서인'],
+            ['23','추준호'],
+            ['24','임선영'],
+            ['25','최용호'],
+            ['26','최우정'],
+            ['27','함영규'],
+            ['28','김민정'],
+            ['29','윤승규'],
+        ];
+
+        var camera, scene, renderer;
+        var controls;
+        var objects = [];
+        var targets = { table: [], sphere: [], helix: [], grid: [] };
+
+        init();
+        animate();
+
+        function init() {
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 5000 );
+            camera.position.z = 1800;
+            scene = new THREE.Scene();
+
+            for ( var i = 0; i < likelion.length; i ++ ) {
+                var element = document.createElement( 'div' );
+                element.className = 'card';
+
+                //var number = document.createElement( 'div' );
+                //number.className = 'number';
+                //number.textContent = '#' + ('00' + (i+1)).slice(-3);
+                //element.appendChild( number );
+
+                var sprite = document.createElement( 'div' );
+                sprite.className = 'sprite';
+                sprite.innerHTML = '<img src="img/' + likelion[ i ][ 0 ] + '.png">';
+                element.appendChild( sprite );
+
+                var name = document.createElement( 'div' );
+                name.className = 'name';
+                name.textContent = likelion[ i ][ 1 ];
+                element.appendChild( name );
+
+                var object = new THREE.CSS3DObject( element );
+                object.position.x = Math.random() * 4000 - 2000;
+                object.position.y = Math.random() * 4000 - 2000;
+                object.position.z = Math.random() * 4000 - 2000;
+                scene.add( object );
+                objects.push( object );
+            }
+            //table
+            for ( var i = 0; i < objects.length; i ++ ) {
+                var object = new THREE.Object3D();
+                object.position.x = ( (i % 6) * 260 ) - 260 * 3;
+                object.position.y = - ( Math.floor(i / 6) * 300 ) + 600;
+                targets.table.push( object );
+            }
+            //sphere
+            var vector = new THREE.Vector3();
+            for ( var i = 0, l = objects.length; i < l; i ++ ) {
+                var phi = Math.acos( -1 + ( 2 * i ) / l );
+                var theta = Math.sqrt( l * Math.PI ) * phi;
+                var object = new THREE.Object3D();
+                object.position.x = 1000 * Math.cos( theta ) * Math.sin( phi );
+                object.position.y = 1000 * Math.sin( theta ) * Math.sin( phi );
+                object.position.z = 1000 * Math.cos( phi );
+                vector.copy( object.position ).multiplyScalar( 2 );
+                object.lookAt( vector );
+                targets.sphere.push( object );
+            }
+            //helix
+            var vector = new THREE.Vector3();
+            for ( var i = 0, l = objects.length; i < l; i ++ ) {
+                var phi = i * 0.175 + Math.PI;
+                var object = new THREE.Object3D();
+                object.position.x = 1300 * Math.sin( phi );
+                object.position.y = - ( i * 8 );
+                object.position.z = 1300 * Math.cos( phi );
+                vector.copy( object.position );
+                vector.x *= 2;
+                vector.z *= 2;
+                object.lookAt( vector );
+                targets.helix.push( object );
+            }
+            //grid 
+            for ( var i = 0; i < objects.length; i ++ ) {
+              var object = objects[ i ];
+              var object = new THREE.Object3D();
+              object.position.x = ( ( i % 3 ) * 400 ) - 800;
+              object.position.y = ( - ( Math.floor( i / 3 ) % 3 ) * 400 ) + 800;
+              object.position.z = ( Math.floor( i / 9 ) ) * 1000 - 2000;
+              targets.grid.push( object );
+            } 
+
+            renderer = new THREE.CSS3DRenderer();
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.domElement.style.position = 'absolute';
+            document.getElementById( 'container' ).appendChild( renderer.domElement );
+
+            controls = new THREE.TrackballControls(camera, renderer.domElement);
+            controls.rotateSpeed = 0.5;
+            controls.addEventListener('change', render);
+
+            document.getElementById('table').addEventListener('click', function (event) { transform( targets.table, 2000 ); }, false);
+            document.getElementById('sphere').addEventListener('click', function (event) { transform( targets.sphere, 2000 ); }, false);
+            document.getElementById('helix').addEventListener('click', function (event) { transform( targets.helix, 2000 ); }, false);
+            transform( targets.sphere, 5000 );
+            document.getElementById('grid').addEventListener('click', function (event) { transform( targets.grid, 2000 ); }, false);
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function transform( targets, duration ) {
+            TWEEN.removeAll();
+            for ( var i = 0; i < objects.length; i ++ ) {
+                var object = objects[ i ];
+                var target = targets[ i ];
+                new TWEEN.Tween( object.position )
+                    .to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
+                    .easing( TWEEN.Easing.Exponential.InOut )
+                    .start();
+                new TWEEN.Tween( object.rotation )
+                    .to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
+                    .easing( TWEEN.Easing.Exponential.InOut )
+                    .start();
+            }
+            new TWEEN.Tween(this)
+                .to( {}, duration * 2 )
+                .onUpdate(render)
+                .start();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize( window.innerWidth, window.innerHeight );
+        }
+
+        function animate() {
+            requestAnimationFrame( animate );
+            TWEEN.update();
+            controls.update();
+        }
+
+        function render() {
+            renderer.render( scene, camera );
+        }
+    </script>
+</body>
+</html>
+
